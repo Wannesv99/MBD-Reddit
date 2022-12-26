@@ -4,6 +4,9 @@ import pandas as pd
 import json
 import networkx as nx
 from pyvis.network import Network
+import numpy as np
+
+
 # Requires zstd package to be installed
 def decompress_zst(in_path, out_path):
     for f in glob.glob(f'{in_path}/*.zst'):
@@ -33,6 +36,7 @@ def concat_files(files):
     
     return df
 
+
 def get_edge_weights(df, sort=True):
     res = df \
         .groupby(["author", "parent_author"]) \
@@ -42,7 +46,31 @@ def get_edge_weights(df, sort=True):
         res.sort_values('weight', ascending=False, inplace=True)
     return res
 
-df = concat_files(glob.glob('./data/2016/reddit*'))
+
+def get_subgraphs(graph):
+    return sorted(nx.strongly_connected_components(graph), key=len, reverse=True)
+
+
+def get_shortest_paths(graph):
+    shortest_paths= []
+    for k in graph:
+        # print(f"calculating shortest paths for node: {k}")
+        for l in graph:
+            if k!=l:
+                sl=nx.shortest_path_length(G,k,l)
+                shortest_paths.append(sl)
+
+    print("Minimum SPL: ", min(shortest_paths))
+    print("maximum SPL: ", max(shortest_paths))
+    print("average SPL is", np.average(shortest_paths))
+
+
+# net = Network(filter_menu=True, select_menu=True, directed=True)
+# net.from_nx(G)
+# net.show('test.html')
+
+
+
 
 # Drop some unwanted columns
 # df.drop([
@@ -68,16 +96,18 @@ df = concat_files(glob.glob('./data/2016/reddit*'))
 
 df = pd.read_csv('reddit-2016-full.csv')
 
-graph_data = get_edge_weights(df)
 
-# print(graph_data.head())
-# # Create network graph
+for num_comments in range(0,16):
+    print(f'num_comments > {num_comments}')
+    graph_data = get_edge_weights(df)
 
-# print(graph_data['weight'].value_counts())
+    graph_data = graph_data[graph_data['weight'] > num_comments]
+    G = nx.from_pandas_edgelist(graph_data, 'author', 'parent_author', 'weight', create_using=nx.DiGraph())
 
-graph_data = graph_data[graph_data['weight'] > 2]
-G = nx.from_pandas_edgelist(graph_data, 'author', 'parent_author', 'weight', create_using=nx.DiGraph())
 
-net = Network(filter_menu=True, select_menu=True, directed=True)
-net.from_nx(G)
-net.show('test.html')
+    subgraphs = sorted(nx.strongly_connected_components(G), key=len, reverse=True)
+    #print(f'largest subgraph: {len(subgraphs[0])}')
+    #print(f'smallest subgraph: {len(subgraphs[-1])}')
+    get_shortest_paths(subgraphs[0])
+    print('----')
+

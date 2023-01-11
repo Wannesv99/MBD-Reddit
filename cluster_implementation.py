@@ -1,6 +1,7 @@
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
+from graphframes import *
 
 sc = SparkContext(appName="MBD-project")
 sc.setLogLevel("ERROR")
@@ -53,5 +54,38 @@ def clean_dataframe(df):
     
     return res
 
+
+def get_node_frame(df, author_column_name='author', parent_column_name='parent_author'):
+    '''
+        Transform datafame into format needed for node dataframe in GraphFrame object
+    '''
+    authors = df.select(col(author_column_name).alias('id'))
+    parents = df.select(parent_column_name)
+
+    nodes = authors.union(parents).distinct()
+
+    return nodes
+    
+
+def get_edge_frame(df, source_col='author', destination_col='parent_author'):
+    '''
+        Transform dataframe into format needed for edge dataframe in GraphFrame object
+    '''
+
+    edges = df.select(col(source_col).alias('src'), 
+                    col(destination_col).alias('dst'), 
+                    col('body').alias('comment'))
+
+    return edges
+
+
+
 df = clean_dataframe(df)
 
+edges = get_edge_frame(df)
+edges.show()
+nodes = get_node_frame(df)
+nodes.show()
+print(edges.count(), nodes.count())
+
+graph = GraphFrame(nodes, edges)

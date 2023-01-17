@@ -128,10 +128,11 @@ def files_to_pickle():
                     networkx.write_gpickle(G, os.path.join("./pickles", file_s[2:] + ".pickle"))
 
 if __name__ == '__main__':
-    for i in range(1, 13):
-        #init_values(i)
-        #df_comments.apply(lambda x: add_edge(x), axis='columns')
-        #networkx.write_gpickle(G, f"graph_{i}.pickle")
-        print(networkx.read_gpickle(f"graph_{i}.pickle"))
+    # for i in range(1, 13):
+    # init_values(i)
+    # df_comments.apply(lambda x: add_edge(x), axis='columns')
+    # networkx.write_gpickle(G, f"graph_{i}.pickle")
+    # print(networkx.read_gpickle(f"graph_{i}.pickle"))
+    visualize()
 
 

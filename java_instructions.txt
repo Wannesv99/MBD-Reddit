@@ -1,0 +1,37 @@
+How to run Java
+
+Create the project on the Remote Machine -> really easy w/ Visual Studio Code
+If not, just create the same directory tree I guess
+
+If using VS Code, check the mvn / java plugin
+
+
+Maven (mvn) should also have some clickable commands on the right bottom corner. If not
+
+mvn compile
+mvn package
+
+package creates a jar file in /target
+
+**** For GraphFrames ****
+
+get the graphframes jar and save it locally like /home/s3072347/project/gf_jar/graphframes-0.8.0-spark2.4-s_2.11.jar
+
+mbd is the java project root dir
+the command below works when in the /mbd/ dir
+
+spark-submit --class "com.graph.GraphFrameEx" --master local[4] --jars target/mbd-1.jar, /home/s3072347/project/gf_jar/graphframes-0.8.0-spark2.4-s_2.11.jar
+
+**** Done with GraphFrames ****
+
+but kindly fuck graphframes
+to use only graphX, run the GraphExample class:
+
+spark-submit --class "com.graph.GraphExample" --master local[4] target/mbd-1.jar
+
+
+
+
+
+
+

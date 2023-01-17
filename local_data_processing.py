@@ -3,7 +3,6 @@ import glob
 import pandas as pd
 import json
 import networkx as nx
-from pyvis.network import Network
 import numpy as np
 import datetime
 
@@ -19,7 +18,7 @@ def decompress_zst(in_path: str, out_path: str):
     for f in glob.glob(f'{in_path}/*.zst'):
         # name format: reddit-yyyy-nn
         output = out_path + '/reddit_' + f.split('_')[1].split('.')[0]
-        
+
         # decompress
         print(f'Decompressing: {f}')
         subprocess.run(['unzstd', f, '--memory=2048MB', '-o', output])
@@ -42,23 +41,23 @@ def concat_files(files: list) -> pd.DataFrame:
         frames.append(frame)
 
     df = pd.concat(frames, ignore_index=True)
-    
+
     del data
     del frames
-    
+
     return df
 
 
-def get_edge_weights(df: pd.DataFrame, by_date= False) -> pd.DataFrame:
+def get_edge_weights(df: pd.DataFrame, by_date=False) -> pd.DataFrame:
     '''
         Returns the number of interactions between two authors
     '''
     edges = df \
-        .groupby(["author", "parent_author"])\
+        .groupby(["author", "parent_author"]) \
         .size() \
         .reset_index(name='weight') \
         .sort_values('weight', ascending=False)
-    
+
     edges = edges[edges['weight'] > 1]
 
     # timestamps = df \
@@ -67,16 +66,18 @@ def get_edge_weights(df: pd.DataFrame, by_date= False) -> pd.DataFrame:
     #         .reset_index(name="weight") \
     #         .sort_values('weight', ascending=False)
 
-    #res = pd.merge(timestamps, edges,  how='left', left_on=['author','parent_author'], right_on=['author','parent_author'])
-    #res.drop('weight_y', axis=1, inplace=True)
+    # res = pd.merge(timestamps, edges,  how='left', left_on=['author','parent_author'], right_on=['author','parent_author'])
+    # res.drop('weight_y', axis=1, inplace=True)
 
     return edges
+
 
 def add_comments_to_edges(edge_list: pd.DataFrame, comment_list: pd.DataFrame) -> pd.DataFrame:
     '''
         Append comments to edge list for matching author connections
     '''
     pass
+
 
 def get_subgraphs(graph: nx.Graph):
     '''
@@ -91,12 +92,12 @@ def get_shortest_paths(graph):
         (deg of separation) in a graph
     '''
 
-    shortest_paths= []
+    shortest_paths = []
     for k in graph:
         # print(f"calculating shortest paths for node: {k}")
         for l in graph:
-            if k!=l:
-                sl=nx.shortest_path_length(G,k,l)
+            if k != l:
+                sl = nx.shortest_path_length(graph, k, l)
                 shortest_paths.append(sl)
 
     print("Minimum SPL: ", min(shortest_paths))
@@ -120,30 +121,36 @@ def preprocess_frame(df):
     '''
 
     res = df.drop([
-        'author_flair_css_class', 
-        'stickied', 
-        'retrieved_on', 
+        'author_flair_css_class',
+        'stickied',
+        'retrieved_on',
         'author_flair_text',
         'distinguished'
-        ], axis=1)
+    ], axis=1)
 
     res = res[res.author != '[deleted]']
 
-    res[['parent_type','parent_id']] = res.parent_id.str.split('_', expand=True)
+    res[['parent_type', 'parent_id']] = res.parent_id.str.split('_', expand=True)
 
     parent_map = df.set_index('id')['author']
     res['parent_author'] = res['parent_id'].map(parent_map)
     res.dropna(inplace=True, subset=['parent_author'])
     return res
 
-file = [glob.glob('./data/2016/*')[2]]
-df = concat_files(file)
-df = preprocess_frame(df)
 
-edges = get_edge_weights(df)
-print(edges.head(50))
+# file = [glob.glob('./data/2016/*')[2]]
+# df = concat_files(file)
+# df = preprocess_frame(df)
+#
+# edges = get_edge_weights(df)
+# print(edges.head(50))
 
-#df.to_csv('reddit-2016-full.csv', encoding='utf-8')
+path_out = "D:\MSc_DST\Year1\Q2\BigData\project\data\data2"
+path_in = "D:\MSc_DST\Year1\Q2\BigData\project\data"
+
+decompress_zst(path_in, path_out)
+
+# df.to_csv('reddit-2016-full.csv', encoding='utf-8')
 
 # df = pd.read_csv('reddit-2016-full.csv')
 
@@ -163,8 +170,8 @@ print(edges.head(50))
 #     net.from_nx(G)
 #     net.show('test.html')
 #     exit()
-    # subgraphs = sorted(nx.strongly_connected_components(G), key=len, reverse=True)
-    # #print(f'largest subgraph: {len(subgraphs[0])}')
-    # #print(f'smallest subgraph: {len(subgraphs[-1])}')
-    # get_shortest_paths(subgraphs[0])
-    # print('----')
+# subgraphs = sorted(nx.strongly_connected_components(G), key=len, reverse=True)
+# #print(f'largest subgraph: {len(subgraphs[0])}')
+# #print(f'smallest subgraph: {len(subgraphs[-1])}')
+# get_shortest_paths(subgraphs[0])
+# print('----')

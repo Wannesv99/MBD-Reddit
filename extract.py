@@ -21,9 +21,9 @@ def zst_to_json(source_path, dest_path):
 
                 # if the json file already exists in the dest folder, delete it
                 # this is because the appending might continue the previously generated files
-                file_json = file.split('.')[0]+'.json'
+                file_json = file.split('.')[0] + '.json'
                 if file_json in os.listdir(dest_path):
-                    os.remove(dest_path+file_json)
+                    os.remove(dest_path + file_json)
 
                 with open(dest_path + file_json, 'a') as f_out:
                     for line in text_stream:
@@ -35,4 +35,3 @@ def zst_to_json(source_path, dest_path):
 path = 'D:\\MSc_DST\\Year1\\Q2\\BigData\\project\\data\\'
 path_dest = 'D:\\MSc_DST\\Year1\\Q2\\BigData\\project\\data_json\\'
 zst_to_json(path, path_dest)
-

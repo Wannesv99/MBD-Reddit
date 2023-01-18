@@ -68,11 +68,11 @@ object DataProcessing{
 
     var joined = dfc.as("df11")
       .join(dfs.as("df22"), col("df11.parent_id") === col("df22.id"), "left")
-      .withColumn("parent_authors", when(col("df11.parent_id") === col("df22.id"), col("df22.author"))
+      .withColumn("parent_author", when(col("df11.parent_id") === col("df22.id"), col("df22.author"))
         .otherwise(col("df11.parent_author")))
       .select(col("df11.author"), col("df11.body"), col("df11.created_utc"),
         col("df11.id"), col("df11.link_id"), col("df11.parent_id"), col("df11.parent_type"), col("df11.subreddit"),
-        col("df11.subreddit_id"), col("df11.score"),col("parent_authors"))
+        col("df11.subreddit_id"), col("df11.score"),col("parent_author"))
 
     // .join(dfs.as("df22"), $"df11.parent_id" === $"df22.id", "left")
     // .withColumn("parent_authors", when($"df11.parent_id" === $"df22.id", $"df22.author")
@@ -89,7 +89,9 @@ object DataProcessing{
     var dfc2 = comments_clean_dataframe(dfc, cols)
     var dfs2 = posts_clean_dataframe(dfs)
 
-    val joined = link_comments_to_posts(dfc2, dfs2)
+    var joined = link_comments_to_posts(dfc2, dfs2)
+
+    joined = joined.filter(joined("parent_author").isNotNull)
 
     return joined
   }
@@ -99,9 +101,14 @@ object DataProcessing{
     val spark = SparkSession.builder().appName("test").master("local").getOrCreate()
     import spark.implicits._
     // val dfc = read_data(spark, "/user/s3049221/reddit/RC_2006-11.json")
-    val dfc = read_data(spark, "/user/s3072347/reddit_data/data/RC_2006-01.json")
-    val dfs = read_data(spark, "/user/s3072347/reddit_data/data/RS_2006-01.json")
+    val dfc = read_data(spark, "/user/s3072347/reddit_data/data/RC_*.json")
 
+    println("Comments: ")
+    println(dfc.count())
+
+    val dfs = read_data(spark, "/user/s3072347/reddit_data/data/RS_*.json")
+    println("Posts: ")
+    println(dfs.count())
 
     val cols = Seq("author_flair_css_class",
       "stickied",
@@ -115,6 +122,8 @@ object DataProcessing{
     val df_fin = get_final_comm_df(dfc, dfs, cols)
 
     df_fin.printSchema()
+    println("Final: ")
+    println(df_fin.count())
 
     df_fin.show()
 

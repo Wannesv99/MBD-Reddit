@@ -1,14 +1,19 @@
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
-from graphframes import *
-
-sc = SparkContext(appName="MBD-project")
+import sys
+sc = SparkContext.getOrCreate()
 sc.setLogLevel("ERROR")
 spark = SparkSession(sc)
 
+
+from graphframes import *
+
 # local file for testing
 df = spark.read.json('file:///home/s1943251/mbd-project/data/reddit_2006-01')
+
+def ceildiv(a, b):
+    return -(a // -b)
 
 
 def get_edge_weights(df):
@@ -73,7 +78,7 @@ def get_edge_frame(df, source_col='author', destination_col='parent_author'):
     '''
 
     edges = df.select(col(source_col).alias('src'), 
-                    col(destination_col).alias('dst'), 
+                    col(destination_col).alias('dst'),
                     col('body').alias('comment'))
 
     return edges
@@ -83,9 +88,40 @@ def get_edge_frame(df, source_col='author', destination_col='parent_author'):
 df = clean_dataframe(df)
 
 edges = get_edge_frame(df)
-edges.show()
 nodes = get_node_frame(df)
-nodes.show()
-print(edges.count(), nodes.count())
+
 
 graph = GraphFrame(nodes, edges)
+
+
+graph = graph.dropIsolatedVertices()
+
+
+
+result = graph.connectedComponents().show()
+
+#result = graph.pageRank(maxIter=10).vertices.show()
+# spark-submit --packages graphframes:graphframes:0.8.0-spark2.4-s_2.11 --deploy-mode cluster --master yarn --conf spark.dynamicAllocation.maxExecutors=10 main.py
+#result = graph.stronglyConnectedComponents(maxIter=1)
+
+# with open('test.txt', 'w') as sys.stdout:
+#     print('we got here')
+    #result.select("id", "component").orderBy("component").show()
+
+# num_nodes = graph.vertices.count()
+# split_size = 100
+# num_splits = ceildiv(num_nodes, split_size)
+
+# copy_nodes = graph.vertices
+
+# for n in range(num_splits):
+#     temp_nodes = copy_nodes.limit(split_size)
+#     copy_nodes = copy_nodes.subtract(temp_nodes)
+
+#     temp_id_list = temp_nodes.select("id").rdd.flatMap(lambda x: x).collect()
+#     print(temp_id_list)
+#     temp_shortest_paths = graph.shortestPaths(landmarks=temp_id_list[0])
+#     temp_shortest_paths.show()
+#     print(temp_shortest_paths.count())
+
+#     break

@@ -4,6 +4,8 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 
+import org.apache.spark.graphx._
+import org.apache.spark.graphx.lib._
 
 object DataProcessing{
 
@@ -39,6 +41,7 @@ object DataProcessing{
 
     var joined = df2.as("df11")
       .join(df2.as("df22"), col("df11.parent_id") === col("df22.id"), "left")
+      //.withColumn("Relationship", when(col("df11.parent_id") === col("df22.id"), "reply" ) )
       .select(col("df11.author"), col("df11.body"), col("df11.created_utc"),
         col("df11.id"), col("df11.link_id"), col("df11.parent_id"), col("df11.parent_type"), col("df11.subreddit"),
         col("df11.subreddit_id"), col("df11.score"), col("df22.author").as("parent_author"))
@@ -58,6 +61,7 @@ object DataProcessing{
       "title"
     )
 
+    df2 = df2.filter(df2("author") === "[deleted]")
     df2 = df2.filter(df2("num_comments") > 0)
 
     return df2
@@ -95,6 +99,30 @@ object DataProcessing{
 
     return joined
   }
+
+
+  def get_edge_vertex_rdd(dfc: DataFrame): [RDD, RDD]={
+
+    // VertexId is just an alias for Long
+    val vertices : RDD[(VertexId, (String,String))] = dfcc.select(col("id"), col("author")).rdd.map(x => (x.get(0).toString, x.get(1).toString)).zipWithIndex.map(_.swap)
+
+    // val edges : RDD[(VertexId, String)] = dfcc.select(explode(array(col("id"), col("author")))).distinct.rdd.map(_.getAs[String](0)).zipWithIndex.map(_.swap)
+
+    val vdf = vertices.map{case (key, value) => (key, value._1, value._2)}.toDF("id", "index", "author")
+
+
+    //TODO!!!
+    // val edges : RDD[Edge(VertexId, VertexId, String)] = dfc.
+    //                                                     .join(vdf, dfc("id") = vdf("index"))
+    //                                                     .
+
+    return edges, vertices
+
+  }
+
+
+
+
 
   def main(args : Array[String]) {
 

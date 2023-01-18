@@ -1,0 +1,23 @@
+How to create and run a Scala project
+
+Run this in the terminal
+
+mvn archetype:generate -DarchetypeGroupId=net.alchim31.maven -DarchetypeArtifactId=scala-archetype-simple
+
+GroupId: com.graph
+ArtifaceId: mdb
+Version: 0.0.1
+
+create the files whatever
+
+update the pom.xml file with what's on git
+
+mvn compile
+mvn package
+
+Runs just like java. To run the command below you need to be in the root folder of the scala project
+
+spark-submit --class "com.graph.DataProcessing" --master local[4] target/mbd-0.0.1.jar
+
+
+

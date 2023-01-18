@@ -1,13 +1,20 @@
 package com.graph;
 import org.apache.spark.api.java.*;
 import org.apache.spark.graphx.*;
+
 import org.apache.spark.storage.StorageLevel;
+import scala.collection.immutable.Map;
+import scala.collection.immutable.Seq;
 import scala.reflect.ClassTag;
 
 import org.apache.spark.SparkConf;
 import java.util.List;
 import java.util.ArrayList;
 
+import org.apache.spark.graphx.lib.*;
+
+import static scala.collection.Seq.*;
+import scala.collection.JavaConversions;
 public class GraphExample {
     public static void main(String[] args) {
 
@@ -39,6 +46,15 @@ public class GraphExample {
         // verts.forEach(map -> map.forEach((k,v) -> {}));
         // System.out.println(k,v)
 //}));
+
+        Seq test = (Seq) JavaConversions.asScalaBuffer(edges);
+
+
+
+        Graph<Map<Object, Object>, String> shortestPaths = ShortestPaths.run(graph, test, null);
+
+        shortestPaths.vertices().toJavaRDD().collect().forEach(System.out::println);
+
 
         javaSparkContext.close();
 

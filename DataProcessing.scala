@@ -72,7 +72,7 @@ object DataProcessing{
         var dfs2 = posts_clean_dataframe(dfs)
         var joined = link_comments_to_posts(dfc2, dfs2)
         joined = joined.filter(joined("parent_author").isNotNull)
-        joined = joined.filter(joined("parent_author") === "[deleted]")
+        joined = joined.filter(!(joined("parent_author") === "[deleted]"))
         return joined
     }
 
@@ -88,13 +88,24 @@ object DataProcessing{
 
     def get_edge_frame(dfc: DataFrame, nodes: RDD[(VertexId, String)]): RDD[Edge[String]]={
         val vdf = nodes.toDF("id", "author")
-        val edges : RDD[Edge[String]] = dfc.join(vdf, dfc("author") === vdf("author"))
-                                            .select(vdf("id") as "src", vdf("author") as "auth", dfc("parent_author"))
-                                            .join(vdf, vdf("author") === col("parent_author"))
-                                            .select(col("src"), vdf("id") as "dst")
-                                            .withColumn("meta", lit("reply")).rdd
-                                            .map(row => Edge(row.getAs[Long]("src"), row.getAs[Long]("dst"), row.getAs[String]("meta")))
-        return edges
+	val e1 = dfc.join(vdf, dfc("author") === vdf("author"))
+					.select(vdf("id") as "a_id", vdf("author") as "a", dfc("parent_author") as "pa",
+						dfc("body") as "bod")
+	e1.show()
+	val e2 = e1.join(vdf, vdf("author") === e1("pa")).select(e1("a_id") as "src", vdf("id") as "dst", e1("bod") as "meta")
+					//.withColumn("meta", lit("reply")).rdd
+	
+	e2.show()
+	val e3 = e2.map(row => Edge(row.getAs[Long]("src"), row.getAs[Long]("dst"), row.getAs[String]("meta")))
+	e3.show()
+
+//	val edges : RDD[Edge[String]] = dfc.join(vdf, dfc("author") === vdf("author"))
+//                                            .select(vdf("id") as "src", vdf("author") as "auth", dfc("parent_author"))
+//                                            .join(vdf, vdf("author") === col("parent_author"))
+//                                            .select(col("src"), vdf("id") as "dst")
+//                                            .withColumn("meta", lit("reply")).rdd
+//                                            .map(row => Edge(row.getAs[Long]("src"), row.getAs[Long]("dst"), row.getAs[String]("meta")))
+        return e3.rdd
     }
 
 
@@ -127,11 +138,14 @@ object DataProcessing{
         //df_fin.show()
         val nodes = get_node_frame(df_fin)
         val edges = get_edge_frame(df_fin, nodes)
-        val graph = get_graph(nodes, edges)
-        nodes.take(5).foreach(println)
-	edges.take(5).foreach(println)
-	val result = ShortestPaths.run(graph, Seq(1))
-	result.vertices.first._2.take(5).foreach(println)
-	graph.vertices.take(5).foreach(toString).foreach(println)
+	println(edges.count())
+        //val graph = get_graph(nodes, edges)
+        //nodes.take(5).foreach(println)
+	//edges.take(5).foreach(println)
+	//val result = ShortestPaths.run(graph, Seq(1))
+	//result.vertices.first._2.take(5).foreach(println)
+	//val conn = graph.connectedComponents().vertices
+	//graph.inDegrees.take(5).foreach(println)
+	//graph.vertices.take(5).foreach(println)
     }
 }

@@ -128,6 +128,7 @@ object DataProcessing{
         val graph = get_graph(nodes, edges)
         val sp_result = ShortestPaths.run(graph, Seq(1))
         println("Result shortest path (TEST): ")
-        sp_result.edges.first._2.take(5).foreach(println)
+        sp_result.edges.take(5).foreach(println)
+        sp_result.vertices.take(5).foreach(println)
     }
 }

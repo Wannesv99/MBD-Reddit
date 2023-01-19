@@ -78,9 +78,6 @@ object DataProcessing{
 
 
     def get_node_frame(dfc: DataFrame): RDD[(VertexId, String)]={
-        //val authors : RDD[String] = dfc.select(col("author") as "id").map(r => r(0).toString).rdd
-        //val parents : RDD[String] = dfc.select("parent_author").map(r => r(0).toString).rdd
-        //val nodes = authors.union(parents).distinct()
         val nodes : RDD[(VertexId, String)] = dfc.select(col("author")).map(r => r(0).toString).rdd.zipWithIndex.map(_.swap)
         return nodes 
     }
@@ -88,23 +85,11 @@ object DataProcessing{
 
     def get_edge_frame(dfc: DataFrame, nodes: RDD[(VertexId, String)]): RDD[Edge[String]]={
         val vdf = nodes.toDF("id", "author")
-	val e1 = dfc.join(vdf, dfc("author") === vdf("author"))
+	    val e1 = dfc.join(vdf, dfc("author") === vdf("author"))
 					.select(vdf("id") as "a_id", vdf("author") as "a", dfc("parent_author") as "pa",
 						dfc("body") as "bod")
-	e1.show()
-	val e2 = e1.join(vdf, vdf("author") === e1("pa")).select(e1("a_id") as "src", vdf("id") as "dst", e1("bod") as "meta")
-					//.withColumn("meta", lit("reply")).rdd
-	
-	e2.show()
-	val e3 = e2.map(row => Edge(row.getAs[Long]("src"), row.getAs[Long]("dst"), row.getAs[String]("meta")))
-	e3.show()
-
-//	val edges : RDD[Edge[String]] = dfc.join(vdf, dfc("author") === vdf("author"))
-//                                            .select(vdf("id") as "src", vdf("author") as "auth", dfc("parent_author"))
-//                                            .join(vdf, vdf("author") === col("parent_author"))
-//                                            .select(col("src"), vdf("id") as "dst")
-//                                            .withColumn("meta", lit("reply")).rdd
-//                                            .map(row => Edge(row.getAs[Long]("src"), row.getAs[Long]("dst"), row.getAs[String]("meta")))
+	    val e2 = e1.join(vdf, vdf("author") === e1("pa")).select(e1("a_id") as "src", vdf("id") as "dst", e1("bod") as "meta")
+	    val e3 = e2.map(row => Edge(row.getAs[Long]("src"), row.getAs[Long]("dst"), row.getAs[String]("meta")))
         return e3.rdd
     }
 
@@ -138,14 +123,11 @@ object DataProcessing{
         //df_fin.show()
         val nodes = get_node_frame(df_fin)
         val edges = get_edge_frame(df_fin, nodes)
-	println(edges.count())
-        //val graph = get_graph(nodes, edges)
-        //nodes.take(5).foreach(println)
-	//edges.take(5).foreach(println)
-	//val result = ShortestPaths.run(graph, Seq(1))
-	//result.vertices.first._2.take(5).foreach(println)
-	//val conn = graph.connectedComponents().vertices
-	//graph.inDegrees.take(5).foreach(println)
-	//graph.vertices.take(5).foreach(println)
+        println("Number of edges: ")
+	    println(edges.count())
+        val graph = get_graph(nodes, edges)
+        val sp_result = ShortestPaths.run(graph, Seq(1))
+        println("Result shortest path (TEST): ")
+        sp_result.edges.first._2.take(5).foreach(println)
     }
 }

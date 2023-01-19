@@ -126,9 +126,12 @@ object DataProcessing{
         println("Number of edges: ")
 	    println(edges.count())
         val graph = get_graph(nodes, edges)
-        val sp_result = ShortestPaths.run(graph, Seq(1))
+	val graph2 = graph.vertices.repartition(100)
+	println(graph2.getNumPartitions)
+        val sp_result = ShortestPaths.run(graph, Seq(1, 6, 8))
         println("Result shortest path (TEST): ")
-        sp_result.edges.take(5).foreach(println)
-        sp_result.vertices.take(5).foreach(println)
+	var bla = sp_result.vertices.map{case (x, b) => (x, b.values)}
+	bla.take(5).foreach(println)
+	//sp_result.vertices.take(20).foreach(println)
     }
 }

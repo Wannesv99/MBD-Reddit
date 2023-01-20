@@ -103,10 +103,10 @@ object DataProcessing{
 
 
     def main(args : Array[String]) {
-        val dfc = read_data(spark, "/user/s3072347/reddit_data/data/RC_*.json")
+        val dfc = read_data(spark, "/user/s3049221/reddit/RC_2013-0*.json")
         println("Comments: ")
         println(dfc.count())
-        val dfs = read_data(spark, "/user/s3072347/reddit_data/data/RS_*.json")
+        val dfs = read_data(spark, "/user/s3049221/reddit/RS_2013-0*.json")
         println("Posts: ")
         println(dfs.count())
         val cols = Seq("author_flair_css_class", 
@@ -122,14 +122,14 @@ object DataProcessing{
         val edges = get_edge_frame(df_fin, nodes)
         val graph = get_graph(nodes, edges)
 	val v_ids = graph.vertices.map{case (a, b) => a}	
-	val subgraph = v_ids.take(10).toSeq
+	val subgraph = v_ids.take(5).toSeq
         val sp_result = ShortestPaths.run(graph, subgraph)
 	var filtered = sp_result.vertices.filter{case (a, b) => b.nonEmpty}
 	var map1 = filtered.map{case (x, b) => (x, b.foldLeft(0)(_+_._2), b.size)}
-	var map2 = map1.map{case (a, b, c) => (a, b.toFloat/c)}
+	var map2 = map1.map{case (a, b, c) => (a, b.toFloat/c)}.filter{case (a, b) => !(b==0.0)}
 	var paths = map2.map{case (a, b) => b}
 	var mn = paths.mean()
 	println(mn)
-	map2.take(30).foreach(println)
+	map2.take(3).foreach(println)
     }
 }

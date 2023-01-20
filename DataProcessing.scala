@@ -1,5 +1,6 @@
 package com.graph
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame 
 import org.apache.spark.sql.functions._
@@ -117,21 +118,18 @@ object DataProcessing{
                        "gilded",
                        "ups")
         val df_fin = get_final_comm_df(dfc, dfs, cols)
-        df_fin.printSchema()
-        println("Final: ")
-        println(df_fin.count())
-        //df_fin.show()
         val nodes = get_node_frame(df_fin)
         val edges = get_edge_frame(df_fin, nodes)
-        println("Number of edges: ")
-	    println(edges.count())
         val graph = get_graph(nodes, edges)
-	val graph2 = graph.vertices.repartition(100)
-	println(graph2.getNumPartitions)
-        val sp_result = ShortestPaths.run(graph, Seq(1, 6, 8))
-        println("Result shortest path (TEST): ")
-	var bla = sp_result.vertices.map{case (x, b) => (x, b.values.sum/b.values.size)}
-	bla.take(5).foreach(println)
-	//sp_result.vertices.take(20).foreach(println)
+	val v_ids = graph.vertices.map{case (a, b) => a}	
+	val subgraph = v_ids.take(10).toSeq
+        val sp_result = ShortestPaths.run(graph, subgraph)
+	var filtered = sp_result.vertices.filter{case (a, b) => b.nonEmpty}
+	var map1 = filtered.map{case (x, b) => (x, b.foldLeft(0)(_+_._2), b.size)}
+	var map2 = map1.map{case (a, b, c) => (a, b.toFloat/c)}
+	var paths = map2.map{case (a, b) => b}
+	var mn = paths.mean()
+	println(mn)
+	map2.take(30).foreach(println)
     }
 }

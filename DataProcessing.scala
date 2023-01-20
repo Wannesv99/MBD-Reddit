@@ -130,7 +130,7 @@ object DataProcessing{
 	println(graph2.getNumPartitions)
         val sp_result = ShortestPaths.run(graph, Seq(1, 6, 8))
         println("Result shortest path (TEST): ")
-	var bla = sp_result.vertices.map{case (x, b) => (x, b.values)}
+	var bla = sp_result.vertices.map{case (x, b) => (x, b.values.sum/b.values.size)}
 	bla.take(5).foreach(println)
 	//sp_result.vertices.take(20).foreach(println)
     }
